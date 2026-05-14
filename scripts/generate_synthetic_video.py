@@ -15,6 +15,7 @@ WIDTH = 640
 HEIGHT = 360
 FPS = 10
 NUM_FRAMES = 80
+OBJECT_SIZE = (68, 44)
 
 
 def _interpolate(start: tuple[int, int], end: tuple[int, int], ratio: float) -> tuple[int, int]:
@@ -26,7 +27,6 @@ def _interpolate(start: tuple[int, int], end: tuple[int, int], ratio: float) -> 
 def _draw_scene(frame: np.ndarray, hand_x: int, object_pos: tuple[int, int] | None) -> None:
     cv2.rectangle(frame, (90, 185), (560, 315), (145, 145, 145), thickness=-1)
     cv2.rectangle(frame, (470, 220), (560, 300), (20, 20, 20), thickness=-1)
-    cv2.putText(frame, "bag", (492, 265), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (220, 220, 220), 1)
 
     hand_y = 165
     cv2.rectangle(frame, (hand_x, hand_y), (hand_x + 42, hand_y + 90), (210, 80, 40), thickness=-1)
@@ -34,7 +34,9 @@ def _draw_scene(frame: np.ndarray, hand_x: int, object_pos: tuple[int, int] | No
 
     if object_pos is not None:
         ox, oy = object_pos
-        cv2.rectangle(frame, (ox, oy), (ox + 36, oy + 24), (20, 20, 220), thickness=-1)
+        ow, oh = OBJECT_SIZE
+        cv2.rectangle(frame, (ox, oy), (ox + ow, oy + oh), (20, 20, 230), thickness=-1)
+        cv2.rectangle(frame, (ox, oy), (ox + ow, oy + oh), (240, 240, 240), thickness=2)
 
 
 def _write_video(path: Path, suspicious: bool) -> None:
@@ -44,12 +46,15 @@ def _write_video(path: Path, suspicious: bool) -> None:
         msg = f"Failed to create video writer: {path}"
         raise RuntimeError(msg)
 
-    object_start = (220, 238)
-    object_end = (490, 246)
+    object_start = (205, 235)
+    object_end = (485, 238)
     try:
         for index in range(NUM_FRAMES):
             frame = np.full((HEIGHT, WIDTH, 3), 180, dtype=np.uint8)
-            hand_x = int(np.interp(index, [0, 30, NUM_FRAMES - 1], [65, 195, 410]))
+            if suspicious:
+                hand_x = int(np.interp(index, [0, 30, NUM_FRAMES - 1], [65, 195, 410]))
+            else:
+                hand_x = int(np.interp(index, [0, 30, NUM_FRAMES - 1], [65, 120, 155]))
 
             if suspicious:
                 if index < 24:
@@ -84,7 +89,7 @@ def main() -> None:
     with labels_path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["video_path", "label", "evidence_frames"])
-        writer.writerow(["data/sample/sample_suspicious.mp4", 1, "24;36;58"])
+        writer.writerow(["data/sample/sample_suspicious.mp4", 1, "24;36;60"])
         writer.writerow(["data/sample/sample_normal.mp4", 0, ""])
 
     print(f"Generated {suspicious_path}")

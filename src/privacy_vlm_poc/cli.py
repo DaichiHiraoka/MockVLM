@@ -11,6 +11,7 @@ from rich.table import Table
 
 from privacy_vlm_poc.analyzer import analyze_video
 from privacy_vlm_poc.evaluation import evaluate_labels
+from privacy_vlm_poc.model_selection import model_candidates, ollama_doctor
 from privacy_vlm_poc.schemas import MaskMethod, ROI, SamplingMethod, VLMBackend
 
 console = Console()
@@ -77,6 +78,25 @@ def evaluate_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def doctor_command(_args: argparse.Namespace) -> int:
+    table = Table(title="Research VLM Model Selection")
+    table.add_column("Role")
+    table.add_column("Model")
+    table.add_column("Size")
+    table.add_column("Command")
+    for candidate in model_candidates():
+        table.add_row(candidate.role, candidate.name, candidate.expected_download_size, candidate.command)
+    console.print(table)
+
+    result = ollama_doctor()
+    console.print_json(json.dumps(result.to_dict(), ensure_ascii=False))
+    if result.host_reachable and result.configured_model_present and result.ollama_command_available:
+        console.print("[green]Ollama VLM backend is ready.[/green]")
+        return 0
+    console.print("[yellow]Ollama VLM backend is not fully ready. See notes above.[/yellow]")
+    return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="privacy-vlm-poc")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -90,6 +110,9 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--labels", required=True, type=Path)
     _add_common_options(evaluate_parser)
     evaluate_parser.set_defaults(func=evaluate_command)
+
+    doctor_parser = subparsers.add_parser("doctor", help="Check local VLM research readiness")
+    doctor_parser.set_defaults(func=doctor_command)
     return parser
 
 

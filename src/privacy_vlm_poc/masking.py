@@ -126,18 +126,18 @@ def grid_image(
         cell = frame.copy()
         if frame_infos and index < len(frame_infos):
             info = frame_infos[index]
-            label = f"frame {info.frame_index}  {info.timestamp:.2f}s"
+            label = f"#{index + 1} frame {info.frame_index}  {info.timestamp:.2f}s"
         else:
-            label = f"frame {index}"
-        cv2.rectangle(cell, (0, 0), (min(first_width, 220), 24), (0, 0, 0), thickness=-1)
+            label = f"#{index + 1} frame {index}"
+        cv2.rectangle(cell, (0, 0), (min(first_width, 280), 34), (0, 0, 0), thickness=-1)
         cv2.putText(
             cell,
             label,
-            (6, 17),
+            (8, 24),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.45,
+            0.65,
             (255, 255, 255),
-            1,
+            2,
             cv2.LINE_AA,
         )
         y1 = row * first_height
