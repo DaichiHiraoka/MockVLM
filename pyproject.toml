@@ -10,7 +10,7 @@ dependencies = [
     "pydantic>=2.6",
     "pandas>=2.2",
     "scikit-learn>=1.4",
-    "gradio>=4.44",
+    "streamlit>=1.40",
     "rich>=13.7",
 ]
 
