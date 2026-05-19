@@ -78,6 +78,7 @@ def run_matrix(args: argparse.Namespace) -> Path:
                     num_frames=args.num_frames,
                     mask_method=mask,
                     vlm_backend=args.vlm_backend,
+                    vlm_model=args.vlm_model,
                     resize_width=args.resize_width,
                 )
                 selected = [frame.frame_index for frame in result.selected_frames]
@@ -88,6 +89,7 @@ def run_matrix(args: argparse.Namespace) -> Path:
                         "sampling_method": sampling,
                         "mask_method": mask,
                         "vlm_backend": args.vlm_backend,
+                        "vlm_model": args.vlm_model,
                         "prediction": int(result.vlm_response.unauthorized_object_interaction_suspected),
                         "confidence": result.vlm_response.confidence,
                         "target_object": result.vlm_response.target_object,
@@ -122,6 +124,7 @@ def run_matrix(args: argparse.Namespace) -> Path:
 
     config = {
         "vlm_backend": args.vlm_backend,
+        "vlm_model": args.vlm_model,
         "num_frames": args.num_frames,
         "resize_width": args.resize_width,
         "samplings": samplings,
@@ -183,6 +186,7 @@ def _markdown_table(dataframe: pd.DataFrame) -> str:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run research comparison matrix")
     parser.add_argument("--vlm-backend", choices=[item.value for item in VLMBackend], default=VLMBackend.MOCK.value)
+    parser.add_argument("--vlm-model", default=None)
     parser.add_argument("--num-frames", type=int, default=8)
     parser.add_argument("--resize-width", type=int, default=None)
     parser.add_argument("--samplings", default=None, help="Comma-separated sampling methods")

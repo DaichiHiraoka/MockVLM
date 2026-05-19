@@ -9,10 +9,12 @@ from pathlib import Path
 import streamlit as st
 
 from privacy_vlm_poc.analyzer import analyze_video
+from privacy_vlm_poc.config import get_settings
 from privacy_vlm_poc.schemas import AnalyzeResult, MaskMethod, ROI, SamplingMethod, VLMBackend
 
 UPLOAD_DIR = Path("outputs/uploads")
 SAMPLE_DIR = Path("data/sample")
+OLLAMA_MODEL_OPTIONS = ["gemma3:4b", "gemma3:12b"]
 
 
 def _sample_video_options() -> dict[str, Path | None]:
@@ -50,12 +52,15 @@ def _render_gallery(paths: list[Path], columns: int = 4) -> None:
 
 
 def _render_result(result: AnalyzeResult) -> None:
+    run_config = json.loads(result.config_path.read_text(encoding="utf-8")).get("config", {})
     st.subheader("Run")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("判定", str(result.vlm_response.unauthorized_object_interaction_suspected))
     c2.metric("confidence", f"{result.vlm_response.confidence:.2f}")
     c3.metric("selected frames", str(len(result.selected_frames)))
     c4.metric("processing sec", f"{result.processing_time_sec:.2f}")
+    if run_config.get("vlm_backend") == VLMBackend.OLLAMA.value:
+        st.caption(f"model: {run_config.get('vlm_model') or get_settings().ollama_model}")
     st.code(str(result.run_dir), language="text")
 
     tab_grid, tab_frames, tab_json, tab_report, tab_files = st.tabs(
@@ -98,6 +103,7 @@ def _render_result(result: AnalyzeResult) -> None:
 
 
 def run_app() -> None:
+    settings = get_settings()
     st.set_page_config(page_title="Privacy VLM PoC", layout="wide")
     st.title("Privacy VLM PoC")
 
@@ -122,6 +128,15 @@ def run_app() -> None:
             [item.value for item in VLMBackend],
             index=[item.value for item in VLMBackend].index(VLMBackend.MOCK.value),
         )
+        ollama_model = None
+        if vlm_backend == VLMBackend.OLLAMA.value:
+            default_model = settings.ollama_model if settings.ollama_model in OLLAMA_MODEL_OPTIONS else "gemma3:4b"
+            ollama_model = st.selectbox(
+                "ollama_model",
+                OLLAMA_MODEL_OPTIONS,
+                index=OLLAMA_MODEL_OPTIONS.index(default_model),
+                help="UI から切り替えられる Gemma 3 モデルです。",
+            )
 
         use_roi = st.checkbox("ROIを指定する", value=False)
         roi_cols = st.columns(2)
@@ -155,6 +170,7 @@ def run_app() -> None:
                     mask_method=mask_method,
                     roi=roi,
                     vlm_backend=vlm_backend,
+                    vlm_model=ollama_model,
                     resize_width=int(resize_width),
                 )
         except Exception as exc:  # noqa: BLE001 - UI boundary should report recoverable errors.

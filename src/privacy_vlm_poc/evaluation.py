@@ -67,6 +67,7 @@ def evaluate_labels(
     mask_method: str | MaskMethod = MaskMethod.NONE,
     roi: ROI | tuple[int, int, int, int] | None = None,
     vlm_backend: str | VLMBackend = VLMBackend.MOCK,
+    vlm_model: str | None = None,
     resize_width: int | None = None,
     settings: Settings | None = None,
 ) -> EvaluationMetrics:
@@ -95,6 +96,7 @@ def evaluate_labels(
             mask_method=mask_method,
             roi=roi,
             vlm_backend=vlm_backend,
+            vlm_model=vlm_model,
             resize_width=resize_width,
             settings=settings,
         )

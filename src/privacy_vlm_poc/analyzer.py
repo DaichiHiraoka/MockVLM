@@ -74,6 +74,7 @@ def _write_report(
 - sampling_method: `{config.sampling_method}`
 - mask_method: `{config.mask_method}`
 - vlm_backend: `{config.vlm_backend}`
+- vlm_model: `{config.vlm_model or "-"}`
 - selected_frames: {selected}
 - processing_time_sec: {processing_time_sec:.3f}
 
@@ -103,6 +104,7 @@ def analyze_video(
     mask_method: str | MaskMethod = MaskMethod.NONE,
     roi: ROI | tuple[int, int, int, int] | None = None,
     vlm_backend: str | VLMBackend = VLMBackend.MOCK,
+    vlm_model: str | None = None,
     output_root: str | Path | None = None,
     resize_width: int | None = None,
     settings: Settings | None = None,
@@ -119,6 +121,7 @@ def analyze_video(
         mask_method=MaskMethod(mask_method),
         roi=roi_model,
         vlm_backend=VLMBackend(vlm_backend),
+        vlm_model=vlm_model,
         resize_width=resize_width,
     )
 

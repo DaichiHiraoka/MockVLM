@@ -22,6 +22,13 @@ def _env_int(name: str, default: int) -> int:
     return int(value)
 
 
+def _env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        return default
+    return float(value)
+
+
 def load_env_file(path: str | Path = ".env") -> None:
     """Load a simple KEY=VALUE .env file without adding python-dotenv."""
 
@@ -46,6 +53,7 @@ class Settings(BaseModel):
     ollama_enabled: bool = False
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "gemma3:4b"
+    ollama_timeout_sec: float = Field(default=300.0, gt=0)
 
     openai_compatible_enabled: bool = False
     openai_compatible_base_url: str = ""
@@ -64,6 +72,7 @@ def get_settings() -> Settings:
         ollama_enabled=_env_bool("OLLAMA_ENABLED", False),
         ollama_host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
         ollama_model=os.getenv("OLLAMA_MODEL", "gemma3:4b"),
+        ollama_timeout_sec=_env_float("OLLAMA_TIMEOUT_SEC", 300.0),
         openai_compatible_enabled=_env_bool("OPENAI_COMPATIBLE_ENABLED", False),
         openai_compatible_base_url=os.getenv("OPENAI_COMPATIBLE_BASE_URL", ""),
         openai_compatible_api_key=os.getenv("OPENAI_COMPATIBLE_API_KEY", ""),

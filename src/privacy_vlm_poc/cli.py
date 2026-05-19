@@ -11,7 +11,7 @@ from rich.table import Table
 
 from privacy_vlm_poc.analyzer import analyze_video
 from privacy_vlm_poc.evaluation import evaluate_labels
-from privacy_vlm_poc.model_selection import model_candidates, ollama_doctor
+from privacy_vlm_poc.model_selection import UI_OLLAMA_MODELS, ensure_ollama_models, model_candidates, ollama_doctor
 from privacy_vlm_poc.schemas import MaskMethod, ROI, SamplingMethod, VLMBackend
 
 console = Console()
@@ -38,6 +38,7 @@ def _add_common_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--mask", choices=[item.value for item in MaskMethod], default=MaskMethod.NONE.value)
     parser.add_argument("--roi", type=_parse_roi, default=None, help="Optional ROI formatted as x1,y1,x2,y2")
     parser.add_argument("--vlm-backend", choices=[item.value for item in VLMBackend], default=VLMBackend.MOCK.value)
+    parser.add_argument("--vlm-model", default=None, help="Optional per-run model override for the selected backend")
     parser.add_argument("--resize-width", type=int, default=None)
 
 
@@ -49,6 +50,7 @@ def analyze_command(args: argparse.Namespace) -> int:
         mask_method=args.mask,
         roi=args.roi,
         vlm_backend=args.vlm_backend,
+        vlm_model=args.vlm_model,
         resize_width=args.resize_width,
     )
     table = Table(title="Analysis Complete")
@@ -72,6 +74,7 @@ def evaluate_command(args: argparse.Namespace) -> int:
         mask_method=args.mask,
         roi=args.roi,
         vlm_backend=args.vlm_backend,
+        vlm_model=args.vlm_model,
         resize_width=args.resize_width,
     )
     console.print_json(json.dumps(metrics.model_dump(mode="json"), ensure_ascii=False))
@@ -97,6 +100,17 @@ def doctor_command(_args: argparse.Namespace) -> int:
     return 1
 
 
+def bootstrap_command(args: argparse.Namespace) -> int:
+    models = [item.strip() for item in args.models.split(",") if item.strip()]
+    result = ensure_ollama_models(models)
+    console.print_json(json.dumps(result.to_dict(), ensure_ascii=False))
+    if result.host_reachable and result.sample_data_ready:
+        console.print("[green]Runtime assets are ready.[/green]")
+        return 0
+    console.print("[yellow]Runtime assets are not fully ready. See notes above.[/yellow]")
+    return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="privacy-vlm-poc")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -113,6 +127,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     doctor_parser = subparsers.add_parser("doctor", help="Check local VLM research readiness")
     doctor_parser.set_defaults(func=doctor_command)
+
+    bootstrap_parser = subparsers.add_parser(
+        "bootstrap",
+        help="Create local defaults, sample data, and pull UI Ollama models",
+    )
+    bootstrap_parser.add_argument(
+        "--models",
+        default=",".join(UI_OLLAMA_MODELS),
+        help="Comma-separated Ollama models to ensure locally",
+    )
+    bootstrap_parser.set_defaults(func=bootstrap_command)
     return parser
 
 

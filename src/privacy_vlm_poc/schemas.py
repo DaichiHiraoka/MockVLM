@@ -100,6 +100,7 @@ class AnalyzeConfig(BaseModel):
     mask_method: MaskMethod
     roi: ROI | None = None
     vlm_backend: VLMBackend
+    vlm_model: str | None = None
     resize_width: int | None = Field(default=None, gt=0)
 
 

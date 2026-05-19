@@ -16,12 +16,21 @@ uv run python scripts/generate_synthetic_video.py
 uv run pytest
 ```
 
+新しいfetch先や別PCでUI用モデルとサンプルデータをまとめて補完する場合は、次の1コマンドを実行します。
+
+```powershell
+uv run privacy-vlm-poc bootstrap
+```
+
+このコマンドは `.env` が無ければ作成し、`data/sample` の合成動画を生成し、UIから切り替える `gemma3:4b` と `gemma3:12b` をOllamaへ取得します。Ollama本体は事前にインストールされている必要があります。
+
 ## Selected Research VLM
 
 実証用の最小推奨VLMは Ollama の `gemma3:4b` です。ローカル実行でき、Text+Image入力に対応し、約3.3GBの構成で反復比較に使いやすいためです。
 
 ```powershell
 ollama pull gemma3:4b
+ollama pull gemma3:12b
 uv run python -m privacy_vlm_poc.cli doctor
 ```
 

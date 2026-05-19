@@ -208,9 +208,10 @@ class OllamaVLMClient:
     ) -> VLMResponse:
         if not self.settings.ollama_enabled:
             return self._disabled_response()
+        selected_model = config.vlm_model or self.settings.ollama_model
         try:
             payload = {
-                "model": self.settings.ollama_model,
+                "model": selected_model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {
@@ -224,7 +225,7 @@ class OllamaVLMClient:
                 "options": {"temperature": 0},
             }
             url = f"{self.settings.ollama_host.rstrip('/')}/api/chat"
-            data = _post_json(url, payload)
+            data = _post_json(url, payload, timeout=self.settings.ollama_timeout_sec)
             message = data.get("message", {})
             return _safe_parse_response(str(message.get("content", "")))
         except (OSError, urllib.error.URLError, json.JSONDecodeError, KeyError, TimeoutError) as exc:
